@@ -1,9 +1,14 @@
 version: "3.4"
 
+networks:
+    loki:
+
 services:
     my-nginx-service:
         image: nginx
         container_name: my-nginx-service
+        networks:
+            - loki
         ports:
             - 8000:80
         environment:
@@ -13,30 +18,36 @@ services:
             options:
                 loki-url: http://localhost:3100/loki/api/v1/push
                 loki-external-labels: job=dockerlogs,owner=fiberplane,environment=development
+    loki:
+        image: grafana/loki:2.5.0
+        container_name: loki
+        ports:
+            - "3100:3100"
+        command: -config.file=/etc/loki/local-config.yaml
+        networks:
+            - loki
+        volumes:
+            - ./config/loki.yaml:/etc/config/loki.yaml
+        entrypoint:
+            - /usr/bin/loki
+            - -config.file=/etc/config/loki.yaml
 
     logger-app:
         image: ctovena/logger:0.12
         container_name: logger
+        networks:
+            - loki
         logging:
             driver: loki
             options:
                 loki-url: http://localhost:3100/loki/api/v1/push
                 loki-external-labels: job=dockerlogs,owner=fiberplane,environment=development
 
-    loki:
-        image: grafana/loki:2.0.0
-        container_name: loki
-        volumes:
-            - ./config/loki.yaml:/etc/config/loki.yaml
-        entrypoint:
-            - /usr/bin/loki
-            - -config.file=/etc/config/loki.yaml
-        ports:
-            - "3200:3200"
-
     fiberplane-proxy:
         image: fiberplane/proxy:v1
         container_name: fiberplane-proxy
+        networks:
+            - loki
         volumes:
             - "./config/data_sources.yaml:/app/data_sources.yaml"
         command: "--auth-token=${PROXY_API_TOKEN}"
