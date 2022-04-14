@@ -46,6 +46,12 @@ services:
                 loki-url: http://host.docker.internal:3100/loki/api/v1/push
                 loki-external-labels: job=dockerlogs,owner=fiberplane,environment=development
                 mode: non-blocking
+    grafana:
+        image: grafana/grafana:latest
+        ports:
+            - "3000:3000"
+        networks:
+            - loki
 
     fiberplane-proxy:
         image: fiberplane/proxy:v1
@@ -57,3 +63,9 @@ services:
         volumes:
             - "./config/data_sources.yaml:/app/data_sources.yaml"
         command: "--auth-token=${PROXY_API_TOKEN}"
+        logging:
+            driver: loki
+            options:
+                loki-url: http://host.docker.internal:3100/loki/api/v1/push
+                loki-external-labels: job=dockerlogs,owner=fiberplane,environment=development
+                mode: non-blocking
