@@ -1,1 +1,1 @@
-# loki-docker-nginx-example
+# fiberplane-loki-docker-nginx-example
