@@ -19,6 +19,7 @@ services:
                 loki-url: http://loki:3100/loki/api/v1/push
                 loki-external-labels: job=dockerlogs,owner=fiberplane,environment=development
                 mode: non-blocking
+
     loki:
         image: grafana/loki:2.5.0
         container_name: loki
@@ -36,6 +37,7 @@ services:
     logger-app:
         image: ctovena/logger:0.12
         container_name: logger
+        command: --url=http://loki:3100/loki/api/v1/push
         depends_on:
             - "loki"
         networks:
@@ -46,6 +48,7 @@ services:
                 loki-url: http://loki:3100/loki/api/v1/push
                 loki-external-labels: job=dockerlogs,owner=fiberplane,environment=development
                 mode: non-blocking
+
     grafana:
         image: grafana/grafana:latest
         ports:
