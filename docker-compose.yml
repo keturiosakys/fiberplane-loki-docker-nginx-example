@@ -1,24 +1,16 @@
 version: "3.4"
 
-networks:
-    loki:
-
 services:
     my-nginx-service:
         image: nginx
         container_name: my-nginx-service
-        networks:
-            - loki
         ports:
             - 8000:80
-        environment:
-            - FOO=bar
         logging:
             driver: loki
             options:
-                loki-url: http://host.docker.internal:3100/loki/api/v1/push
-                loki-external-labels: job=dockerlogs,owner=fiberplane,environment=development
-                mode: non-blocking
+                loki-url: http://localhost:3100/loki/api/v1/push
+                loki-external-labels: app=nginx,job=dockerlogs,owner=fiberplane,environment=development
 
     loki:
         image: grafana/loki:2.5.0
@@ -26,49 +18,39 @@ services:
         ports:
             - "3100:3100"
         command: -config.file=/etc/loki/local-config.yaml
-        networks:
-            - loki
         volumes:
             - ./config/loki.yaml:/etc/config/loki.yaml
         entrypoint:
             - /usr/bin/loki
             - -config.file=/etc/config/loki.yaml
 
-    logger-app:
-        image: ctovena/logger:0.12
-        container_name: logger
-        command: --url=http://loki:3100/loki/api/v1/push
-        depends_on:
-            - "loki"
-        networks:
-            - loki
-        logging:
-            driver: loki
-            options:
-                loki-url: http://host.docker.internal:3100/loki/api/v1/push
-                loki-external-labels: job=dockerlogs,owner=fiberplane,environment=development
-                mode: non-blocking
-
     grafana:
         image: grafana/grafana:latest
         ports:
             - "3000:3000"
-        networks:
-            - loki
+
+    logger-app:
+        image: ctovena/logger:0.12
+        container_name: logger
+        command: --url=http://loki:3100/loki/api/v1/push --logps=5
+        depends_on:
+            - "loki"
+        logging:
+            driver: loki
+            options:
+                loki-url: http://localhost:3100/loki/api/v1/push
+                loki-external-labels: app=logger,job=dockerlogs,owner=fiberplane,environment=development
 
     fiberplane-proxy:
         image: fiberplane/proxy:v1
         container_name: fiberplane-proxy
         depends_on:
             - "loki"
-        networks:
-            - loki
         volumes:
             - "./config/data_sources.yaml:/app/data_sources.yaml"
         command: "--auth-token=${PROXY_API_TOKEN}"
         logging:
             driver: loki
             options:
-                loki-url: http://host.docker.internal:3100/loki/api/v1/push
-                loki-external-labels: job=dockerlogs,owner=fiberplane,environment=development
-                mode: non-blocking
+                loki-url: http://localhost:3100/loki/api/v1/push
+                loki-external-labels: app=proxy,job=dockerlogs,owner=fiberplane,environment=development
