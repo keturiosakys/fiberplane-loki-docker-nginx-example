@@ -48,7 +48,7 @@ services:
             - "loki"
         volumes:
             - "./config/data_sources.yaml:/app/data_sources.yaml"
-        command: "--auth-token=${PROXY_API_TOKEN}"
+        command: "--auth-token=${PROXY_API_TOKEN}" # add the Proxy API Token to a .env file
         logging:
             driver: loki
             options:
