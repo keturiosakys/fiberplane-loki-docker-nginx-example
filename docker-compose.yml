@@ -24,11 +24,6 @@ services:
             - /usr/bin/loki
             - -config.file=/etc/config/loki.yaml
 
-    grafana:
-        image: grafana/grafana:latest
-        ports:
-            - "3000:3000"
-
     logger-app:
         image: ctovena/logger:0.12
         container_name: logger
